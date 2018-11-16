@@ -24,13 +24,18 @@ const expressions = {
     'UnaryExpression': unary_handle,
     'BinaryExpression': binary_handle,
     'UpdateExpression': update_handle,
-    'MemberExpression': member_handle
+    'MemberExpression': member_handle,
+    'Identifier': identifier_handle,
+    //  'VariableDeclarator': var_dec_handle
+    'Literal': literal_handle
 };
 
-const arguments = {
+const args = {
     'Identifier': identifier_handle,
-
-}
+    'BinaryExpression': binary_handle,
+    //  'VariableDeclarator': var_dec_handle
+    'Literal': literal_handle
+};
 
 
 function create_objects(parseCode) {
@@ -48,10 +53,10 @@ function program_handle(program) {
 }
 
 function function_handle(func) {
-    let func_name = arguments[func.id.type](func.id);
+    let func_name = expressions[func.id.type](func.id);
     statements.push({line: func.loc.start.line, type: func.type, name: func_name, condition: undefined, value: undefined});
     for (let i =0; i<func.params.length;++i) {
-        let param_name = arguments[func.params[i].type](func.params[i]);
+        let param_name = expressions[func.params[i].type](func.params[i]);
         statements.push({line: func.params[i].loc.start.line, type: func.params[i].type, name: param_name, condition: undefined, value: undefined});
     }
     func[func.body.type](func.body);
@@ -59,29 +64,36 @@ function function_handle(func) {
 
 function variable_handle(obj) {
     for (let i=0; i<obj.declarations.length; ++i) {
-        let name = arguments[obj.declarations[i].type](obj.declarations[i]);
-        statements.push({line: obj.loc.start, type: obj.type, name: obj.id.name, condition: undefined, value: undefined});
+        let dec = obj.declarations[i];
+        //let name = expressions[obj.declarations[i].type](obj.declarations[i]);
+        //let name = dec.id.name;
+        statements.push({line: obj.loc.start.line, type: obj.type, name: dec.id.name, condition: undefined, value: undefined});
     }
 }
 
 function assignment_handle(exp){
-    statements.push({line: exp.loc.start, type: exp.type, name: exp.left.name, condition: undefined, value: exp.right.value});
+    let name = expressions[exp.left.type](exp.left);
+    let value = expressions[exp.right.type](exp.right);
+    statements.push({line: exp.loc.start.line, type: exp.type, name: name, condition: undefined, value: value});
 
 }
 function while_handle(exp) {
-    let left,right;
-    if(exp.left.hasOwnProperty('object'))
-        left = array_handle(exp.left.object);
-    else
-        left = left.name;
-    if(exp.right.hasOwnProperty('object')){
-        right = array_handle(exp.left.object);
-    }
-
-    let condition = left + exp.test.operator+ right;//exp.test.left.name + exp.test.operator + exp.test.right.name;
-    statements.push({line: exp.loc.start, type: exp.type, name: left, condition: condition, value: exp.right.value});
-    let body = exp.body.body;
-    body_iter(body);
+    let condition = expressions[exp.test.type](exp.test);
+    statements.push({line: exp.loc.start.line, type: exp.type, name: name, condition: condition, value: undefined});
+    func[exp.body.type](exp.body);
+    // let left,right;
+    // if(exp.left.hasOwnProperty('object'))
+    //     left = array_handle(exp.left.object);
+    // else
+    //     left = left.name;
+    // if(exp.right.hasOwnProperty('object')){
+    //     right = array_handle(exp.left.object);
+    // }
+    //
+    // let condition = left + exp.test.operator+ right;//exp.test.left.name + exp.test.operator + exp.test.right.name;
+    // statements.push({line: exp.loc.start, type: exp.type, name: left, condition: condition, value: exp.right.value});
+    // let body = exp.body.body;
+    // body_iter(body);
 }
 
 function return_handle(statement){
@@ -96,29 +108,20 @@ function body_iter(statement){
 }
 
 function if_handle(exp){
+    func[exp.]();
     let condition = exp.test.left.name + exp.test.operator + exp.test.right.name;
-    statements.push({line: exp.loc.start, type: exp.type, name: exp.left.name, condition: condition, value: exp.right.value});
+    statements.push({line: exp.loc.start.line, type: exp.type, name: exp.left.name, condition: condition, value: exp.right.value});
     func[exp.consequen.type](exp.consequen);
     func[exp.alternate.type](exp.alternate);
 }
 
-function array_handle(array){
-    let array_name = array.name;
-    let array_property = array.property;
-    let name = array_name + '[';
-    if(array_property.hasOwnProperty('object')){
-        name = name + array_handle(array_property);
-    }
-    name = name + ']';
-    return name;
-}
 
 
 
 function for_handle(statement){
-    statements.push({line: statement.loc.start, type: exp.type, name: exp.left.name, condition: condition, value: exp.right.value})
+    let condition = func[statement.test.type](statement.test);
+    statements.push({line: statement.loc.start.line, type: statement.type, name: statement.left.name, condition: condition, value: undefined});
     func[statement.init.type](statement.init);
-    func[statement.test.type](statement.test);
     func[statement.update.type](statement.update);
     func[statement.body.type](statement.body);
 }
@@ -127,17 +130,39 @@ function unary_handle(statement){
 
 }
 
-function binary_handle(statement){
-
+function binary_handle(exp){
+    let left = expressions[exp.left.type](exp.left);
+    let right = expressions[exp.right.type](exp.right);
+    let operator = exp.operator;
+    return left+operator+right;
 }
 
-function update_handle(statement){
-    statement.operator + statement.argument;
+function update_handle(exp){
+    let name = expressions[exp.argument.type](exp.argument);
+    let operator = exp.operator;
+    statements.push({line: exp.loc.start.line, type: exp.type, name: name, condition: undefined, value: operator+name});
 }
 
 function identifier_handle(identifier){
     return identifier.name;
 }
+
+function literal_handle(literal){
+    return literal.raw;
+}
+
+function member_handle() {
+
+}
+
+function expression_handle(exp){
+    expressions[exp.expression.type](exp.expression);
+}
+
+
+// function var_dec_handle(vardec){
+//     return vardec.id.name;
+// }
 
 
 
@@ -167,22 +192,6 @@ function push_element(element){
 //     case 'VariableDeclaration':
 //         variable_handle(statement);
 //         break;
-//     }
-// }
-
-
-// function expression_handle(obj){
-//     switch (obj.expression.type) {
-//     case 'AssignmentExpression':
-//         assignment_handle();
-//         break;
-//     case 'UnaryExpression':
-//         unary_handle();
-//         break;
-//     case 'BinaryExpression':
-//         binary_handle();
-//         break;
-//     case 'UpdateExpression':
 //     }
 // }
 
