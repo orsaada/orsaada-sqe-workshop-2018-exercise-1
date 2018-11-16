@@ -8,6 +8,23 @@ export {parseCode};
 
 let statements = [];
 
+const func = {
+    'FunctionDeclaration': function_handle,
+    'VariableDeclaration': variable_handle,
+    'ExpressionStatement': expression_handle,
+    'WhileStatement': while_handle,
+    'IfStatement': if_handle,
+    'ReturnStatement': return_handle,
+    'ForStatement': for_handle,
+    'BlockStatement': block_handle
+};
+
+const expressions = {
+    'AssignmentExpression': assignment_handle,
+    'UnaryExpression': unary_handle,
+    'BinaryExpression': binary_handle,
+    'UpdateExpression': update_handle
+};
 function create_objects(parseCode) {
     if (parseCode.type.valueOf() === 'Program') {
         program_handle(parseCode);
@@ -17,11 +34,7 @@ export {create_objects};
 
 function program_handle(program) {
     for (let i=0; i<program.body.length ;++i) {
-        switch (program.body[i].type) {
-        case 'FunctionDeclaration':
-            function_handle(program.body[i]);
-            break;
-        }
+        func[program.body[i].type](program.body[i]);
     }
 }
 
@@ -31,31 +44,7 @@ function function_handle(func) {
         statements.push({line: func.params[i].loc.start.line, type: func.params[i].type, name: func.params[i].name, condition: undefined, value: undefined});
     }
     body_iter(func.body);
-    // for (let i =0; i<func.body.length;++i) {
-    //     switch (func.body[i].type) {
-    //     case 'BlockStatement':
-    //         block_statement_handle();
-    //         break;
-    //     }
-    // }
 }
-
-function block_statement_handle(block) {
-    for (let obj in block.body) {
-        switch (obj.type) {
-        case 'VariableDeclaration':
-            variable_handle(obj);
-            break;
-        case 'ExpressionStatement':
-            expression_handle(obj);
-            break;
-        case 'WhileStatement':
-            while_handle();
-            break;
-        }
-    }
-}
-
 
 function variable_handle(obj) {
     for (let i=0; i<obj.declarations.length; ++i) {
@@ -69,10 +58,12 @@ function expression_handle(obj){
         assignment_handle();
         break;
     case 'UnaryExpression':
-
+        unary_handle();
         break;
-    case '':
-
+    case 'BinaryExpression':
+        binary_handle();
+        break;
+    case 'UpdateExpression':
     }
 }
 
@@ -129,7 +120,7 @@ function array_handle(array){
 function choose(statement){
     switch (statement.type) {
     case 'BlockStatement':
-        block_statement_handle(statement);
+        body_iter(statement.body);
         break;
     case 'ExpressionStatement':
         expression_handle(statement);
@@ -143,8 +134,50 @@ function choose(statement){
     case 'ReturnStatement':
         return_handle(statement);
         break;
+    case 'ForStatement':
+        for_handle(statement);
+        break;
+    case 'VariableDeclaration':
+        variable_handle(statement);
+        break;
     }
 }
+
+function for_handle(statement){
+    statements.push({line: statement.loc.start, type: exp.type, name: exp.left.name, condition: condition, value: exp.right.value})
+    func[statement.init.type](statement.init);
+    func[statement.test.type](statement.test);
+
+    func[statement.body.type](statement.body);
+    statement.update;
+
+
+}
+
+function block_handle(statement){
+
+}
+
+
+function unary_handle(){
+
+}
+
+function binary_handle(){
+
+}
+
+function update_handle(){
+
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -175,4 +208,33 @@ function choose(statement){
 // // case 'ReturnStatement':
 // //     return_handle();
 // //     break;
+// }
+
+// function block_statement_handle(block) {
+//     for (let obj in block.body) {
+//         switch (obj.type) {
+//         case 'VariableDeclaration':
+//             variable_handle(obj);
+//             break;
+//         case 'ExpressionStatement':
+//             expression_handle(obj);
+//             break;
+//         case 'WhileStatement':
+//             while_handle();
+//             break;
+//         }
+//     }
+// }
+
+// for (let i =0; i<func.body.length;++i) {
+//     switch (func.body[i].type) {
+//     case 'BlockStatement':
+//         block_statement_handle();
+//         break;
+//     }
+// }
+
+// case 'FunctionDeclaration':
+//     function_handle(program.body[i]);
+//     break;
 // }
