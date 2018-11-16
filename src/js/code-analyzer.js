@@ -16,54 +16,51 @@ const func = {
     'IfStatement': if_handle,
     'ReturnStatement': return_handle,
     'ForStatement': for_handle,
-    'BlockStatement': block_handle
+    'BlockStatement': body_iter
 };
 
 const expressions = {
     'AssignmentExpression': assignment_handle,
     'UnaryExpression': unary_handle,
     'BinaryExpression': binary_handle,
-    'UpdateExpression': update_handle
+    'UpdateExpression': update_handle,
+    'MemberExpression': member_handle
 };
+
+const arguments = {
+    'Identifier': identifier_handle,
+
+}
+
+
 function create_objects(parseCode) {
     if (parseCode.type.valueOf() === 'Program') {
         program_handle(parseCode);
+    }
+    else{
+        window.alert('not a program');
     }
 }
 export {create_objects};
 
 function program_handle(program) {
-    for (let i=0; i<program.body.length ;++i) {
-        func[program.body[i].type](program.body[i]);
-    }
+    body_iter(program.body);
 }
 
 function function_handle(func) {
-    statements.push({line: func.loc.start.line, type: func.type, name: func.id.name, condition: undefined, value: undefined});
+    let func_name = arguments[func.id.type](func.id);
+    statements.push({line: func.loc.start.line, type: func.type, name: func_name, condition: undefined, value: undefined});
     for (let i =0; i<func.params.length;++i) {
-        statements.push({line: func.params[i].loc.start.line, type: func.params[i].type, name: func.params[i].name, condition: undefined, value: undefined});
+        let param_name = arguments[func.params[i].type](func.params[i]);
+        statements.push({line: func.params[i].loc.start.line, type: func.params[i].type, name: param_name, condition: undefined, value: undefined});
     }
-    body_iter(func.body);
+    func[func.body.type](func.body);
 }
 
 function variable_handle(obj) {
     for (let i=0; i<obj.declarations.length; ++i) {
+        let name = arguments[obj.declarations[i].type](obj.declarations[i]);
         statements.push({line: obj.loc.start, type: obj.type, name: obj.id.name, condition: undefined, value: undefined});
-    }
-}
-
-function expression_handle(obj){
-    switch (obj.expression.type) {
-    case 'AssignmentExpression':
-        assignment_handle();
-        break;
-    case 'UnaryExpression':
-        unary_handle();
-        break;
-    case 'BinaryExpression':
-        binary_handle();
-        break;
-    case 'UpdateExpression':
     }
 }
 
@@ -91,18 +88,18 @@ function return_handle(statement){
     statements.push({line: exp.loc.start, type: statement, name: statement.argument.name, condition: condition, value: exp.right.value});
 }
 
-function body_iter(body){
+function body_iter(statement){
+    let body = statement.body;
     for(let i=0;i<body.length;++i){
-        choose(body[i]);
+        func[body[i].type](body[i]);
     }
 }
 
 function if_handle(exp){
     let condition = exp.test.left.name + exp.test.operator + exp.test.right.name;
     statements.push({line: exp.loc.start, type: exp.type, name: exp.left.name, condition: condition, value: exp.right.value});
-    choose(exp.consequent);
-    choose(exp.alternate);
-
+    func[exp.consequen.type](exp.consequen);
+    func[exp.alternate.type](exp.alternate);
 }
 
 function array_handle(array){
@@ -117,63 +114,77 @@ function array_handle(array){
 }
 
 
-function choose(statement){
-    switch (statement.type) {
-    case 'BlockStatement':
-        body_iter(statement.body);
-        break;
-    case 'ExpressionStatement':
-        expression_handle(statement);
-        break;
-    case 'WhileStatement':
-        while_handle(statement);
-        break;
-    case 'IfStatement':
-        if_handle(statement);
-        break;
-    case 'ReturnStatement':
-        return_handle(statement);
-        break;
-    case 'ForStatement':
-        for_handle(statement);
-        break;
-    case 'VariableDeclaration':
-        variable_handle(statement);
-        break;
-    }
-}
 
 function for_handle(statement){
     statements.push({line: statement.loc.start, type: exp.type, name: exp.left.name, condition: condition, value: exp.right.value})
     func[statement.init.type](statement.init);
     func[statement.test.type](statement.test);
-
+    func[statement.update.type](statement.update);
     func[statement.body.type](statement.body);
-    statement.update;
+}
 
+function unary_handle(statement){
 
 }
 
-function block_handle(statement){
+function binary_handle(statement){
 
 }
 
-
-function unary_handle(){
-
+function update_handle(statement){
+    statement.operator + statement.argument;
 }
 
-function binary_handle(){
-
-}
-
-function update_handle(){
-
+function identifier_handle(identifier){
+    return identifier.name;
 }
 
 
 
+function push_element(element){
+    statements.push({line: exp.loc.sta, type: exp.type, name: exp.left.name, condition: condition, value: exp.right.value});
+}
+// function choose(statement){
+//     switch (statement.type) {
+//     case 'BlockStatement':
+//         body_iter(statement.body);
+//         break;
+//     case 'ExpressionStatement':
+//         expression_handle(statement);
+//         break;
+//     case 'WhileStatement':
+//         while_handle(statement);
+//         break;
+//     case 'IfStatement':
+//         if_handle(statement);
+//         break;
+//     case 'ReturnStatement':
+//         return_handle(statement);
+//         break;
+//     case 'ForStatement':
+//         for_handle(statement);
+//         break;
+//     case 'VariableDeclaration':
+//         variable_handle(statement);
+//         break;
+//     }
+// }
 
+
+// function expression_handle(obj){
+//     switch (obj.expression.type) {
+//     case 'AssignmentExpression':
+//         assignment_handle();
+//         break;
+//     case 'UnaryExpression':
+//         unary_handle();
+//         break;
+//     case 'BinaryExpression':
+//         binary_handle();
+//         break;
+//     case 'UpdateExpression':
+//     }
+// }
 
 
 
@@ -237,4 +248,8 @@ function update_handle(){
 // case 'FunctionDeclaration':
 //     function_handle(program.body[i]);
 //     break;
+// }
+
+// for (let i=0; i<program.body.length ;++i) {
+//     func[program.body[i].type](program.body[i]);
 // }
