@@ -97,7 +97,8 @@ function while_handle(exp) {
 }
 
 function return_handle(statement){
-    statements.push({line: exp.loc.start, type: statement, name: statement.argument.name, condition: condition, value: exp.right.value});
+    let value = func[statement.argument.type](statement.argument);
+    statements.push({line: statement.loc.start.line, type: statement.type, name: undefined, condition: undefined, value: value});
 }
 
 function body_iter(statement){
@@ -108,10 +109,9 @@ function body_iter(statement){
 }
 
 function if_handle(exp){
-    func[exp.]();
-    let condition = exp.test.left.name + exp.test.operator + exp.test.right.name;
+    let condition = func[exp.test.type](exp.test);
     statements.push({line: exp.loc.start.line, type: exp.type, name: exp.left.name, condition: condition, value: exp.right.value});
-    func[exp.consequen.type](exp.consequen);
+    func[exp.consequent.type](exp.consequent);
     func[exp.alternate.type](exp.alternate);
 }
 
@@ -131,6 +131,11 @@ function unary_handle(statement){
 }
 
 function binary_handle(exp){
+    // let one,two,three,four;
+    // one = ''; two = ''; three = ''; four = '';
+    // if(exp.left.type === 'Binart'){
+    //
+    // }
     let left = expressions[exp.left.type](exp.left);
     let right = expressions[exp.right.type](exp.right);
     let operator = exp.operator;
@@ -151,8 +156,10 @@ function literal_handle(literal){
     return literal.raw;
 }
 
-function member_handle() {
-
+function member_handle(exp) {
+    let obj = func[exp.object.type](exp.object);
+    let property = func[exp.property.type](exp.property);
+    return obj+'['+property+']';
 }
 
 function expression_handle(exp){
