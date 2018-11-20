@@ -8,6 +8,8 @@ export {parseCode};
 
 let statements = [];
 
+export  {statements};
+
 const func = {
     'FunctionDeclaration': function_handle,
     'VariableDeclaration': variable_handle,
@@ -24,11 +26,12 @@ const func = {
     'MemberExpression': member_handle,
     'Literal': literal_handle,
     'UnaryExpression': unary_handle
+    //logical expression
     //  'VariableDeclarator': var_dec_handle
 };
 
 const keys = ['Line','Type','Name','Condition', 'Value'];
-//const fields = ['line','type','name','condition','value'];
+const fields = ['line','type','name','condition','value'];
 
 function identifier_handle(identifier){
     return identifier.name;
@@ -103,7 +106,7 @@ function if_handle(exp){
 
 function for_handle(statement){
     let condition = func[statement.test.type](statement.test);
-    statements.push({line: statement.loc.start.line, type: statement.type, name: statement.left.name, condition: condition, value: undefined});
+    statements.push({line: statement.loc.start.line, type: statement.type, name: undefined, condition: condition, value: undefined});
     func[statement.init.type](statement.init);
     func[statement.update.type](statement.update);
     func[statement.body.type](statement.body);
@@ -119,7 +122,8 @@ function binary_handle(exp){
 function update_handle(exp){
     let name = func[exp.argument.type](exp.argument);
     let operator = exp.operator;
-    statements.push({line: exp.loc.start.line, type: exp.type, name: name, condition: undefined, value: operator+name});
+    let value = exp.prefix ? operator+name: name+operator;
+    statements.push({line: exp.loc.start.line, type: exp.type, name: name, condition: undefined, value: value});
 }
 
 function literal_handle(literal){
@@ -143,36 +147,39 @@ function unary_handle(exp){
 
 function table_create(){
     let body = document.getElementsByTagName('body')[0];
-    let tbl  = document.createElement('myTable');
-    tbl.style.width  = '100px';
-    tbl.style.border = '1px solid black';
-    let header = tbl.createTHead();
-    let row = header.insertRow(0);
-    // insert columns
+    let x = document.createElement('TABLE');
+    x.style.border = '1px solid black';
+    body.appendChild(x);
+    x.setAttribute('id', 'myTable');
+    document.body.appendChild(x);
+
+    let y = document.createElement('TR');
+    y.setAttribute('id', 'myTr');
+    document.getElementById('myTable').appendChild(y);
+
     for (let i = 0, l = keys.length; i < l; i ++) {
-        let cell = row.insertCell(i);
-        // cell.innerHTML = '<b>'+keys[i]+'</b>';
-        cell.innerHTML = keys[i];
+        let z = document.createElement('TD');
+        let t = document.createTextNode(keys[i]);
+        z.appendChild(t);
+        document.getElementById('myTr').appendChild(z);
     }
     add_rows();
-    body.appendChild(tbl);
+    window.alert(JSON.stringify(statements));
 }
 
 export {table_create};
 
 function add_rows() {
-    let table = document.getElementById('myTable');
+    let tbl = document.getElementById('myTable');
     for (let i = 0; i < statements.length; i++) {
-        let newRow = table.insertRow(table.length);
-        let j = 0;
-        for (let x in statements[i]) {
-            let cell = newRow.insertCell(j);
-            if(statements[i].hasOwnProperty(x)){
-                cell.innerHTML = statements[i][x];
-            }
-            else
-                cell.innerHTML = 'a';
+        let y = document.createElement('TR');
+        y.setAttribute('id', 'myTr');
+        tbl.appendChild(y);
+        for(let j = 0;j<keys.length;j++){
+            let z = document.createElement('TD');
+            let t = document.createTextNode(statements[i][fields[j]]);
+            z.appendChild(t);
+            y.appendChild(z);
         }
     }
-    document.getElementById('myTable').style.visibility = 'visible';
 }
